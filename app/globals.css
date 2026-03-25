@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --accent: #00e5a0;
+  --accent-dim: #00b87f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-surface-2 border border-border rounded-2xl;
+  }
+
+  .btn-primary {
+    @apply bg-accent text-surface font-semibold px-6 py-3 rounded-xl
+           hover:bg-accent-dim transition-all duration-200
+           disabled:opacity-40 disabled:cursor-not-allowed
+           flex items-center gap-2 justify-center;
+  }
+
+  .btn-ghost {
+    @apply border border-border text-white/70 font-medium px-6 py-3 rounded-xl
+           hover:border-border-hover hover:text-white transition-all duration-200
+           flex items-center gap-2 justify-center;
+  }
+
+  .input-field {
+    @apply w-full bg-surface-3 border border-border rounded-xl px-4 py-3
+           text-white placeholder-white/30 font-mono text-sm
+           focus:outline-none focus:border-border-accent focus:bg-surface-4
+           transition-all duration-200;
+  }
+
+  .step-badge {
+    @apply w-8 h-8 rounded-full flex items-center justify-center
+           text-sm font-bold font-mono;
+  }
+
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.5s ease forwards;
+}
+
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
