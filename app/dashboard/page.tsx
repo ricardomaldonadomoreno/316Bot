@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Bot, CheckCircle2, Circle, ExternalLink, Eye, EyeOff,
   MessageCircle, RefreshCw, Save, Wifi, WifiOff, ChevronRight,
-  Sparkles, Copy, Check
+  Sparkles, Copy, Check, AlertCircle
 } from 'lucide-react'
 import { AI_PROVIDERS, AIProvider } from '@/lib/ai'
 import Link from 'next/link'
@@ -253,25 +253,47 @@ export default function Dashboard() {
         {activeStep === 0 && (
           <StepCard
             step={1}
-            title="Conecta tu cuenta de Meta"
-            desc="Necesitas una cuenta de Meta Business y la API de WhatsApp activada."
+            title="Crea tu propia app en Meta"
+            desc="Cada usuario necesita su propia app en Meta Developers. Tú controlas tu número y pagas directamente a Meta."
             completed={completedSteps[0]}
           >
             <div className="space-y-6">
+
+              {/* Aviso importante */}
+              <div className="flex items-start gap-3 bg-amber-500/8 border border-amber-500/20 rounded-xl p-4">
+                <AlertCircle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="text-amber-400 font-semibold mb-1">Tu app, tu número, tu control</p>
+                  <p className="text-white/50 leading-relaxed">
+                    316Bot es el motor que procesa tus mensajes con IA. La cuenta de
+                    WhatsApp Business y los costos de mensajería son directamente tuyos
+                    con Meta — así tu negocio es completamente independiente y seguro.
+                  </p>
+                </div>
+              </div>
+
+              {/* Guía paso a paso */}
               <div className="bg-surface-3 border border-border rounded-xl p-5 space-y-3">
                 <p className="text-white/60 text-xs font-semibold uppercase tracking-wider">
-                  Guía paso a paso
+                  Cómo crear tu app en Meta — paso a paso
                 </p>
                 {[
-                  { n: 1, text: 'Ve a', link: 'https://developers.facebook.com', label: 'developers.facebook.com' },
-                  { n: 2, text: 'Crea una app → Tipo: "Empresa"' },
-                  { n: 3, text: 'En el panel, busca "WhatsApp" → "Configuración"' },
-                  { n: 4, text: 'Copia tu Token de acceso temporal (o genera uno permanente)' },
-                  { n: 5, text: 'Ingresa el nombre de tu negocio y el token abajo 👇' },
+                  {
+                    n: 1,
+                    text: 'Ve a',
+                    link: 'https://developers.facebook.com',
+                    label: 'developers.facebook.com',
+                    extra: 'e inicia sesión con tu cuenta de Facebook'
+                  },
+                  { n: 2, text: 'Clic en "Mis apps" → "Crear app" → Tipo: "Empresa"' },
+                  { n: 3, text: 'Dentro de tu app, busca el producto "WhatsApp" y haz clic en "Configurar"' },
+                  { n: 4, text: 'Conecta o crea una cuenta de WhatsApp Business con tu número de teléfono' },
+                  { n: 5, text: 'En "Configuración de la API", copia tu Token de acceso permanente' },
+                  { n: 6, text: 'En esa misma sección configura el Webhook con la URL que aparece abajo 👇' },
                 ].map((s) => (
                   <div key={s.n} className="flex items-start gap-3 text-sm">
-                    <span className="font-mono text-accent/60 shrink-0 w-5">{s.n}.</span>
-                    <span className="text-white/50">
+                    <span className="font-mono text-accent/60 shrink-0 w-5 mt-0.5">{s.n}.</span>
+                    <span className="text-white/50 leading-relaxed">
                       {s.text}{' '}
                       {s.link && (
                         <a href={s.link} target="_blank" rel="noopener noreferrer"
@@ -279,6 +301,7 @@ export default function Dashboard() {
                           {s.label} <ExternalLink size={11} />
                         </a>
                       )}
+                      {s.extra && ` ${s.extra}`}
                     </span>
                   </div>
                 ))}
@@ -286,9 +309,12 @@ export default function Dashboard() {
 
               {/* Webhook URL */}
               <div>
-                <label className="block text-white/50 text-sm mb-2 font-medium">
-                  URL de Webhook — cópiala en Meta
+                <label className="block text-white/50 text-sm mb-1.5 font-medium">
+                  URL de Webhook — pégala en tu app de Meta
                 </label>
+                <p className="text-white/25 text-xs mb-2">
+                  Meta Developers → tu app → WhatsApp → Configuración → Webhooks → Editar
+                </p>
                 <div className="flex gap-2">
                   <div className="input-field flex-1 cursor-default select-all text-accent/80 truncate">
                     {webhookUrl}
@@ -297,11 +323,14 @@ export default function Dashboard() {
                     {copiedWebhook ? <Check size={15} className="text-accent" /> : <Copy size={15} />}
                   </button>
                 </div>
-                <p className="text-white/25 text-xs mt-1.5 font-mono">
-                  Verify token: <span className="text-white/40">{process.env.META_WEBHOOK_VERIFY_TOKEN || 'el que definas en .env'}</span>
-                </p>
+                <div className="mt-2 bg-surface-3 border border-border rounded-lg px-3 py-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="text-white/30 text-xs font-mono">Verify token:</span>
+                  <span className="text-accent/80 text-xs font-mono font-bold">316bot-verify-2024</span>
+                  <span className="text-white/20 text-xs">← copia este valor exacto en Meta</span>
+                </div>
               </div>
 
+              {/* Campos */}
               <div>
                 <label className="block text-white/50 text-sm mb-2 font-medium">
                   Nombre de tu negocio
@@ -317,7 +346,7 @@ export default function Dashboard() {
 
               <div>
                 <label className="block text-white/50 text-sm mb-2 font-medium">
-                  Token de acceso de WhatsApp
+                  Token de acceso permanente de tu app de Meta
                 </label>
                 <div className="relative">
                   <input
@@ -335,9 +364,21 @@ export default function Dashboard() {
                   </button>
                 </div>
                 <p className="text-white/25 text-xs mt-1.5">
-                  Se guarda de forma segura. Nunca lo compartimos.
+                  Guardado de forma segura. Solo se usa para enviar respuestas desde tu número.
                 </p>
               </div>
+
+              {/* Info costos */}
+              <div className="flex items-start gap-3 bg-surface-3 border border-border rounded-xl p-4">
+                <span className="text-base shrink-0">💡</span>
+                <p className="text-xs text-white/40 leading-relaxed">
+                  <span className="text-white/60 font-semibold">¿Cuánto cuesta Meta? </span>
+                  Las primeras 1,000 conversaciones al mes son gratis. Después el costo varía
+                  entre $0.01 y $0.06 USD por conversación según el país. Lo pagas directamente
+                  a Meta con tu tarjeta — 316Bot no interviene en ese cobro.
+                </p>
+              </div>
+
             </div>
             <StepNav onNext={() => setActiveStep(1)} disabled={!completedSteps[0]} />
           </StepCard>
@@ -348,7 +389,7 @@ export default function Dashboard() {
           <StepCard
             step={2}
             title="Vincula tu número de WhatsApp"
-            desc="El Phone Number ID identifica tu número en la API de Meta."
+            desc="El Phone Number ID es el identificador único de tu número en la API de Meta."
             completed={completedSteps[1]}
           >
             <div className="space-y-6">
@@ -357,10 +398,10 @@ export default function Dashboard() {
                   ¿Dónde encuentro el Phone Number ID?
                 </p>
                 {[
-                  { n: 1, text: 'En Meta for Developers, ve a tu app' },
+                  { n: 1, text: 'En Meta for Developers, entra a tu app' },
                   { n: 2, text: 'Clic en "WhatsApp" → "Configuración de la API"' },
                   { n: 3, text: 'Verás la sección "Número de teléfono"' },
-                  { n: 4, text: 'Copia el valor de "Phone Number ID" (solo números)' },
+                  { n: 4, text: 'Copia el valor que dice "Phone Number ID" — son solo números' },
                 ].map((s) => (
                   <div key={s.n} className="flex items-start gap-3 text-sm">
                     <span className="font-mono text-accent/60 shrink-0 w-5">{s.n}.</span>
@@ -381,7 +422,7 @@ export default function Dashboard() {
                   className="input-field"
                 />
                 <p className="text-white/25 text-xs mt-1.5">
-                  Solo números. No es tu número de teléfono, es el ID interno de Meta.
+                  Solo números. No es tu número de teléfono, es el ID interno que asigna Meta.
                 </p>
               </div>
 
@@ -571,7 +612,6 @@ export default function Dashboard() {
         {/* ── PANEL EN VIVO ── */}
         {activeStep === 4 && (
           <div className="animate-fade-up opacity-0">
-            {/* Status banner */}
             <div className={clsx(
               'flex items-center justify-between p-5 rounded-2xl border mb-8',
               isActive ? 'bg-accent/5 border-accent/20' : 'bg-white/3 border-border'
@@ -602,7 +642,6 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Conversations panel */}
             <div className="glass-card overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                 <h3 className="font-semibold flex items-center gap-2">
@@ -630,7 +669,6 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="flex divide-x divide-border" style={{ minHeight: 400 }}>
-                  {/* Lista de conversaciones */}
                   <div className="w-64 divide-y divide-border shrink-0 overflow-y-auto max-h-96">
                     {conversations.map(conv => (
                       <button
@@ -656,7 +694,6 @@ export default function Dashboard() {
                     ))}
                   </div>
 
-                  {/* Hilo de mensajes */}
                   <div className="flex-1 p-4 overflow-y-auto max-h-96 space-y-3">
                     {selectedConvData ? (
                       selectedConvData.messages.map((msg, i) => (
@@ -684,8 +721,6 @@ export default function Dashboard() {
     </div>
   )
 }
-
-// ── Componentes auxiliares ──────────────────────────────────
 
 function StepCard({
   step, title, desc, completed, children
