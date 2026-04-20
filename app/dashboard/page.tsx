@@ -3,13 +3,13 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Bot, CheckCircle2, Circle, ExternalLink, Eye, EyeOff,
   MessageCircle, RefreshCw, Save, Wifi, WifiOff, ChevronRight,
-  Sparkles, Copy, Check, AlertCircle
+  Sparkles, Copy, Check, AlertCircle, LogOut
 } from 'lucide-react'
 import { AI_PROVIDERS, AIProvider } from '@/lib/ai'
+import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import clsx from 'clsx'
-
-const DEMO_USER_ID = 'demo-user-001'
 
 type Config = {
   businessName: string
@@ -19,8 +19,6 @@ type Config = {
   aiProvider: AIProvider
   aiApiKey: string
   aiModel: string
-  aiBaseUrl: string
-  botInstructions: string
 }
 
 const defaultConfig: Config = {
@@ -31,8 +29,6 @@ const defaultConfig: Config = {
   aiProvider: 'groq',
   aiApiKey: '',
   aiModel: 'llama-3.1-70b-versatile',
-  aiBaseUrl: '',
-  botInstructions: '',
 }
 
 type ConvMessage = {
@@ -49,6 +45,8 @@ type Conversation = {
 }
 
 export default function Dashboard() {
+  const router = useRouter()
+  const [userId, setUserId] = useState<string | null>(null)
   const [activeStep, setActiveStep] = useState(0)
   const [config, setConfig] = useState<Config>(defaultConfig)
   const [saved, setSaved] = useState(false)
@@ -74,29 +72,34 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
-    fetch(`/api/users?userId=${DEMO_USER_ID}`)
-      .then(r => r.json())
-      .then(({ config: c }) => {
-        if (c) {
-          const loaded: Config = {
-            businessName: c.business_name,
-            phoneNumberId: c.phone_number_id,
-            whatsappToken: c.whatsapp_token,
-            contextPrompt: c.context_prompt,
-            aiProvider: c.ai_provider,
-            aiApiKey: c.ai_api_key,
-            aiModel: c.ai_model,
-            aiBaseUrl: c.ai_base_url || '',
-            botInstructions: c.bot_instructions || '',
+    supabase().auth.getSession().then(({ data: { session } }) => {
+      if (!session) { router.push('/login'); return }
+      const id = session.user.id
+      setUserId(id)
+      fetch(`/api/users?userId=${id}`)
+        .then(r => r.json())
+        .then(({ config: c }) => {
+          if (c) {
+            const loaded: Config = {
+              businessName: c.business_name,
+              phoneNumberId: c.phone_number_id,
+              whatsappToken: c.whatsapp_token,
+              contextPrompt: c.context_prompt,
+              aiProvider: c.ai_provider,
+              aiApiKey: c.ai_api_key,
+              aiModel: c.ai_model,
+              aiBaseUrl: c.ai_base_url || '',
+              botInstructions: c.bot_instructions || '',
+            }
+            setConfig(loaded)
+            setIsActive(c.is_active)
+            updateCompleted(loaded)
+            if (c.is_active) setActiveStep(4)
           }
-          setConfig(loaded)
-          setIsActive(c.is_active)
-          updateCompleted(loaded)
-          if (c.is_active) setActiveStep(4)
-        }
-      })
-      .catch(() => {})
-  }, [updateCompleted])
+        })
+        .catch(() => {})
+    })
+  }, [updateCompleted, router])
 
   const updateField = (field: keyof Config, value: string) => {
     const next = { ...config, [field]: value }
@@ -105,14 +108,20 @@ export default function Dashboard() {
     setSaved(false)
   }
 
+  const handleLogout = async () => {
+    await supabase().auth.signOut()
+    router.push('/login')
+  }
+
   const saveConfig = async () => {
+    if (!userId) return
     setSaving(true)
     try {
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: DEMO_USER_ID,
+          userId,
           businessName: config.businessName,
           phoneNumberId: config.phoneNumberId,
           whatsappToken: config.whatsappToken,
@@ -120,8 +129,6 @@ export default function Dashboard() {
           aiProvider: config.aiProvider,
           aiApiKey: config.aiApiKey,
           aiModel: config.aiModel,
-          aiBaseUrl: config.aiBaseUrl || null,
-          botInstructions: config.botInstructions || null,
         }),
       })
       const data = await res.json()
@@ -138,9 +145,10 @@ export default function Dashboard() {
   }
 
   const loadConversations = async () => {
+    if (!userId) return
     setLoadingConvs(true)
     try {
-      const res = await fetch(`/api/users?userId=${DEMO_USER_ID}`, { method: 'PATCH' })
+      const res = await fetch(`/api/users?userId=${userId}`, { method: 'PATCH' })
       const data = await res.json()
       setConversations(data.conversations || [])
     } catch {
@@ -192,7 +200,7 @@ export default function Dashboard() {
             </div>
             <button
               onClick={saveConfig}
-              disabled={saving}
+              disabled={saving || !userId}
               className="btn-primary text-sm py-2 px-4"
             >
               {saving ? (
@@ -203,6 +211,13 @@ export default function Dashboard() {
                 <Save size={14} />
               )}
               {saving ? 'Guardando...' : saved ? 'Guardado' : 'Guardar'}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="btn-ghost text-sm py-2 px-3"
+              title="Cerrar sesión"
+            >
+              <LogOut size={14} />
             </button>
           </div>
         </div>
@@ -498,28 +513,6 @@ export default function Dashboard() {
                   </span>
                 </div>
               </div>
-              <div>
-                <label className="block text-white/50 text-sm mb-2 font-medium">
-                  Instrucciones del bot
-                  <span className="ml-2 text-[10px] font-mono bg-surface-3 border border-border px-1.5 py-0.5 rounded text-white/30">
-                    OPCIONAL
-                  </span>
-                </label>
-                <textarea
-                  rows={5}
-                  placeholder={`Ej:
-- Responde siempre en inglés
-- Si el cliente pregunta por descuentos, ofrece un 10% con el código PROMO10
-- Nunca menciones a la competencia
-- Si preguntan por soporte técnico, diles que escriban a soporte@minegocio.com`}
-                  value={config.botInstructions}
-                  onChange={e => updateField('botInstructions', e.target.value)}
-                  className="input-field resize-none"
-                />
-                <p className="text-white/25 text-xs mt-1.5">
-                  Reglas adicionales para el bot. Se combinan con las instrucciones base inteligentes de 316Bot.
-                </p>
-              </div>
             </div>
             <StepNav onBack={() => setActiveStep(1)} onNext={() => setActiveStep(3)} disabled={!completedSteps[2]} />
           </StepCard>
@@ -566,9 +559,7 @@ export default function Dashboard() {
                             'text-[10px] font-mono font-bold px-1.5 py-0.5 rounded',
                             p.badge === 'GRATIS'
                               ? 'bg-accent/20 text-accent'
-                              : p.badge === 'CUSTOM'
-                                ? 'bg-purple-500/20 text-purple-400'
-                                : 'bg-amber-500/20 text-amber-400'
+                              : 'bg-amber-500/20 text-amber-400'
                           )}>
                             {p.badge}
                           </span>
@@ -582,44 +573,16 @@ export default function Dashboard() {
 
               <div>
                 <label className="block text-white/50 text-sm mb-2 font-medium">Modelo</label>
-                {config.aiProvider === 'custom' ? (
-                  <input
-                    type="text"
-                    placeholder="Ej: mistral-7b-instruct, deepseek-chat, meta-llama/..."
-                    value={config.aiModel}
-                    onChange={e => updateField('aiModel', e.target.value)}
-                    className="input-field"
-                  />
-                ) : (
-                  <select
-                    value={config.aiModel}
-                    onChange={e => updateField('aiModel', e.target.value)}
-                    className="input-field"
-                  >
-                    {AI_PROVIDERS[config.aiProvider].models.map(m => (
-                      <option key={m} value={m} className="bg-surface-3">{m}</option>
-                    ))}
-                  </select>
-                )}
+                <select
+                  value={config.aiModel}
+                  onChange={e => updateField('aiModel', e.target.value)}
+                  className="input-field"
+                >
+                  {AI_PROVIDERS[config.aiProvider].models.map(m => (
+                    <option key={m} value={m} className="bg-surface-3">{m}</option>
+                  ))}
+                </select>
               </div>
-
-              {config.aiProvider === 'custom' && (
-                <div>
-                  <label className="block text-white/50 text-sm mb-2 font-medium">
-                    Base URL de tu proveedor
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="https://api.mistral.ai/v1"
-                    value={config.aiBaseUrl}
-                    onChange={e => updateField('aiBaseUrl', e.target.value)}
-                    className="input-field"
-                  />
-                  <p className="text-white/25 text-xs mt-1.5">
-                    URL base compatible con OpenAI. Ej: Mistral, DeepSeek, Together AI, Ollama...
-                  </p>
-                </div>
-              )}
 
               <div>
                 <label className="block text-white/50 text-sm mb-2 font-medium">
