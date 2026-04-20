@@ -1,7 +1,7 @@
 import Groq from 'groq-sdk'
 import OpenAI from 'openai'
 
-export type AIProvider = 'groq' | 'gemini' | 'qwen' | 'openai'
+export type AIProvider = 'groq' | 'gemini' | 'qwen' | 'openai' | 'custom'
 
 export const AI_PROVIDERS = {
   groq: {
@@ -36,6 +36,14 @@ export const AI_PROVIDERS = {
     badge: 'PAGO',
     color: '#10a37f',
   },
+  custom: {
+    name: 'Personalizado',
+    description: 'Mistral, DeepSeek, Together, cualquier API compatible con OpenAI',
+    models: ['escribe-tu-modelo'],
+    defaultModel: 'escribe-tu-modelo',
+    badge: 'CUSTOM',
+    color: '#8b5cf6',
+  },
 }
 
 export async function generateAIResponse({
@@ -44,12 +52,14 @@ export async function generateAIResponse({
   model,
   systemPrompt,
   messages,
+  baseURL,
 }: {
   provider: AIProvider
   apiKey: string
   model: string
   systemPrompt: string
   messages: { role: 'user' | 'assistant'; content: string }[]
+  baseURL?: string
 }): Promise<string> {
   const allMessages = [
     { role: 'system' as const, content: systemPrompt },
@@ -101,6 +111,19 @@ export async function generateAIResponse({
         apiKey,
         baseURL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
       })
+      const res = await openai.chat.completions.create({
+        model,
+        messages: allMessages,
+        max_tokens: 500,
+        temperature: 0.7,
+      })
+      return res.choices[0]?.message?.content || 'Lo siento, no pude generar una respuesta.'
+    }
+
+    case 'custom': {
+      // Cualquier API compatible con OpenAI (Mistral, DeepSeek, Together, Anthropic, etc.)
+      if (!baseURL) throw new Error('El proveedor personalizado requiere una Base URL')
+      const openai = new OpenAI({ apiKey, baseURL })
       const res = await openai.chat.completions.create({
         model,
         messages: allMessages,
