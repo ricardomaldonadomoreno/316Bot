@@ -20,6 +20,7 @@ type Config = {
   aiApiKey: string
   aiModel: string
   aiBaseUrl: string
+  botInstructions: string
 }
 
 const defaultConfig: Config = {
@@ -31,6 +32,7 @@ const defaultConfig: Config = {
   aiApiKey: '',
   aiModel: 'llama-3.1-70b-versatile',
   aiBaseUrl: '',
+  botInstructions: '',
 }
 
 type ConvMessage = {
@@ -85,6 +87,7 @@ export default function Dashboard() {
             aiApiKey: c.ai_api_key,
             aiModel: c.ai_model,
             aiBaseUrl: c.ai_base_url || '',
+            botInstructions: c.bot_instructions || '',
           }
           setConfig(loaded)
           setIsActive(c.is_active)
@@ -118,6 +121,7 @@ export default function Dashboard() {
           aiApiKey: config.aiApiKey,
           aiModel: config.aiModel,
           aiBaseUrl: config.aiBaseUrl || null,
+          botInstructions: config.botInstructions || null,
         }),
       })
       const data = await res.json()
@@ -493,6 +497,28 @@ export default function Dashboard() {
                     {config.contextPrompt.length} chars
                   </span>
                 </div>
+              </div>
+              <div>
+                <label className="block text-white/50 text-sm mb-2 font-medium">
+                  Instrucciones del bot
+                  <span className="ml-2 text-[10px] font-mono bg-surface-3 border border-border px-1.5 py-0.5 rounded text-white/30">
+                    OPCIONAL
+                  </span>
+                </label>
+                <textarea
+                  rows={5}
+                  placeholder={`Ej:
+- Responde siempre en inglés
+- Si el cliente pregunta por descuentos, ofrece un 10% con el código PROMO10
+- Nunca menciones a la competencia
+- Si preguntan por soporte técnico, diles que escriban a soporte@minegocio.com`}
+                  value={config.botInstructions}
+                  onChange={e => updateField('botInstructions', e.target.value)}
+                  className="input-field resize-none"
+                />
+                <p className="text-white/25 text-xs mt-1.5">
+                  Reglas adicionales para el bot. Se combinan con las instrucciones base inteligentes de 316Bot.
+                </p>
               </div>
             </div>
             <StepNav onBack={() => setActiveStep(1)} onNext={() => setActiveStep(3)} disabled={!completedSteps[2]} />
