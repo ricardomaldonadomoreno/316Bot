@@ -21,9 +21,10 @@ export type UserConfig = {
   whatsapp_token: string
   business_name: string
   context_prompt: string
-  ai_provider: 'groq' | 'gemini' | 'qwen' | 'openai'
+  ai_provider: 'groq' | 'gemini' | 'qwen' | 'openai' | 'custom'
   ai_api_key: string
   ai_model: string
+  ai_base_url: string | null
   is_active: boolean
   created_at: string
 }
