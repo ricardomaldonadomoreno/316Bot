@@ -19,6 +19,7 @@ type Config = {
   aiProvider: AIProvider
   aiApiKey: string
   aiModel: string
+  aiBaseUrl: string
 }
 
 const defaultConfig: Config = {
@@ -29,6 +30,7 @@ const defaultConfig: Config = {
   aiProvider: 'groq',
   aiApiKey: '',
   aiModel: 'llama-3.1-70b-versatile',
+  aiBaseUrl: '',
 }
 
 type ConvMessage = {
@@ -82,6 +84,7 @@ export default function Dashboard() {
             aiProvider: c.ai_provider,
             aiApiKey: c.ai_api_key,
             aiModel: c.ai_model,
+            aiBaseUrl: c.ai_base_url || '',
           }
           setConfig(loaded)
           setIsActive(c.is_active)
@@ -114,6 +117,7 @@ export default function Dashboard() {
           aiProvider: config.aiProvider,
           aiApiKey: config.aiApiKey,
           aiModel: config.aiModel,
+          aiBaseUrl: config.aiBaseUrl || null,
         }),
       })
       const data = await res.json()
@@ -536,7 +540,9 @@ export default function Dashboard() {
                             'text-[10px] font-mono font-bold px-1.5 py-0.5 rounded',
                             p.badge === 'GRATIS'
                               ? 'bg-accent/20 text-accent'
-                              : 'bg-amber-500/20 text-amber-400'
+                              : p.badge === 'CUSTOM'
+                                ? 'bg-purple-500/20 text-purple-400'
+                                : 'bg-amber-500/20 text-amber-400'
                           )}>
                             {p.badge}
                           </span>
@@ -550,16 +556,44 @@ export default function Dashboard() {
 
               <div>
                 <label className="block text-white/50 text-sm mb-2 font-medium">Modelo</label>
-                <select
-                  value={config.aiModel}
-                  onChange={e => updateField('aiModel', e.target.value)}
-                  className="input-field"
-                >
-                  {AI_PROVIDERS[config.aiProvider].models.map(m => (
-                    <option key={m} value={m} className="bg-surface-3">{m}</option>
-                  ))}
-                </select>
+                {config.aiProvider === 'custom' ? (
+                  <input
+                    type="text"
+                    placeholder="Ej: mistral-7b-instruct, deepseek-chat, meta-llama/..."
+                    value={config.aiModel}
+                    onChange={e => updateField('aiModel', e.target.value)}
+                    className="input-field"
+                  />
+                ) : (
+                  <select
+                    value={config.aiModel}
+                    onChange={e => updateField('aiModel', e.target.value)}
+                    className="input-field"
+                  >
+                    {AI_PROVIDERS[config.aiProvider].models.map(m => (
+                      <option key={m} value={m} className="bg-surface-3">{m}</option>
+                    ))}
+                  </select>
+                )}
               </div>
+
+              {config.aiProvider === 'custom' && (
+                <div>
+                  <label className="block text-white/50 text-sm mb-2 font-medium">
+                    Base URL de tu proveedor
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://api.mistral.ai/v1"
+                    value={config.aiBaseUrl}
+                    onChange={e => updateField('aiBaseUrl', e.target.value)}
+                    className="input-field"
+                  />
+                  <p className="text-white/25 text-xs mt-1.5">
+                    URL base compatible con OpenAI. Ej: Mistral, DeepSeek, Together AI, Ollama...
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-white/50 text-sm mb-2 font-medium">
