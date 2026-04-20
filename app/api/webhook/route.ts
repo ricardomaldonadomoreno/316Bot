@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     }))
 
     // Generar respuesta con IA
-    const systemPrompt = buildSystemPrompt(config.context_prompt, config.business_name)
+    const systemPrompt = buildSystemPrompt(config.context_prompt, config.business_name, config.bot_instructions)
     const aiResponse = await generateAIResponse({
       provider: config.ai_provider as AIProvider,
       apiKey: config.ai_api_key,
@@ -119,18 +119,27 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function buildSystemPrompt(contextPrompt: string, businessName: string): string {
-  return `Eres un asistente virtual de ventas para ${businessName || 'este negocio'}.
-
-CONTEXTO DE TU NEGOCIO Y PRODUCTOS:
-${contextPrompt}
-
-INSTRUCCIONES:
-- Responde SIEMPRE en español de forma amigable y natural
+function buildSystemPrompt(contextPrompt: string, businessName: string, botInstructions?: string): string {
+  const defaultInstructions = `- Responde de forma amigable y natural
 - Sé conciso (máximo 3-4 oraciones por respuesta para WhatsApp)
 - Si el cliente pregunta por un producto, explica sus beneficios y cómo comprarlo
 - Si no sabes algo, di que lo consultarás y responderás pronto
 - No inventes precios ni información que no esté en el contexto
 - Cierra siempre con una invitación a comprar o consultar más
 - Usa emojis ocasionalmente para hacer la conversación más amena`
+
+  const instructions = botInstructions?.trim()
+    ? `${defaultInstructions}
+
+INSTRUCCIONES ADICIONALES DEL NEGOCIO:
+${botInstructions}`
+    : defaultInstructions
+
+  return `Eres un asistente virtual para ${businessName || 'este negocio'}.
+
+CONTEXTO DEL NEGOCIO Y PRODUCTOS:
+${contextPrompt}
+
+INSTRUCCIONES:
+${instructions}`
 }
