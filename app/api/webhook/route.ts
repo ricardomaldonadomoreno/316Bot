@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
       model: config.ai_model,
       systemPrompt,
       messages: contextMessages,
+      baseURL: config.ai_base_url || undefined,
     })
 
     // Agregar respuesta del bot al historial
