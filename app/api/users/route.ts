@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
       aiProvider,
       aiApiKey,
       aiModel,
+      aiBaseUrl,
     } = body
 
     if (!userId) return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
       ai_provider: aiProvider || 'groq',
       ai_api_key: aiApiKey || '',
       ai_model: aiModel || 'llama-3.1-70b-versatile',
+      ai_base_url: aiBaseUrl || null,
       is_active: !!(phoneNumberId && whatsappToken && aiApiKey),
       updated_at: new Date().toISOString(),
     }
